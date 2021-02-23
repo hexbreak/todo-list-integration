@@ -41,7 +41,21 @@ def handle_hello():
 
 @app.route('/todolist', methods=['GET'])
 def handle_listget():
-    body = request.json
+
+    todolist = TodoList.query.all()
+    response_body = list(map(lambda x: x.serialize(), todolist))
+    print(TodoList)
+    print(response_body)
+    return jsonify(response_body), 200
+
+@app.route('/todolist', methods=['POST'])
+def handle_listpost():
+
+    todolist = request.json
+
+    new_todolist = TodoList(user=todolist["user"], label=todolist["label"], done=todolist["done"])
+    db.session.add(new_todolist)
+    db.session.commit()
 
     todolist = TodoList.query.all()
     response_body = list(map(lambda x: x.serialize(), todolist))
