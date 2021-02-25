@@ -39,13 +39,15 @@ def handle_hello():
 
     return jsonify(response_body), 200
 
-@app.route('/todolist', methods=['GET'])
-def handle_listget():
+@app.route('/todolist/<user>', methods=['GET'])
+def handle_listget(user):
 
-    todolist = TodoList.query.all()
+    todolist = TodoList.query.filter_by(user=user)
     response_body = list(map(lambda x: x.serialize(), todolist))
+
     print(TodoList)
     print(response_body)
+
     return jsonify(response_body), 200
 
 @app.route('/todolist', methods=['POST'])
@@ -56,12 +58,37 @@ def handle_listpost():
     new_todolist = TodoList(user=todolist["user"], label=todolist["label"], done=todolist["done"])
     db.session.add(new_todolist)
     db.session.commit()
-
-    todolist = TodoList.query.all()
-    response_body = list(map(lambda x: x.serialize(), todolist))
-    print(TodoList)
-    print(response_body)
+    posttodolist = TodoList.query.filter_by(user=todolist["user"])
+    response_body = list(map(lambda x: x.serialize(), posttodolist))
     return jsonify(response_body), 200
+
+@app.route('/todolist/<int:id>', methods=['PUT'])
+def put_todolist(id):
+
+    body = request.get_json()
+    
+    putlist = TodoList.query.get(id)
+    putlist.label = body["label"]
+    putlist.done = body["done"]
+    db.session.commit()
+    posttodolist = TodoList.query.filter_by(user=body["user"])
+    response_body = list(map(lambda x: x.serialize(), posttodolist))
+    return jsonify(response_body), 200
+
+@app.route('/todolist/<user>/<int:id>', methods=['DELETE'])
+def delete_list(user, id):
+
+    deletelist = TodoList.query.get(id)
+    if deletelist is None:
+        raise APIException('Todo list not found', status_code=404)
+    
+    db.session.delete(deletelist)
+    db.session.commit()
+
+    posttodolist = TodoList.query.filter_by(user=user)
+    response_body = list(map(lambda x: x.serialize(), posttodolist))
+    return jsonify(response_body), 200
+
 
 
 # this only runs if `$ python src/main.py` is executed
